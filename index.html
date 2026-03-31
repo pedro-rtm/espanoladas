@@ -436,6 +436,112 @@
       #grid-container { height: 60vh; }
     }
 
+    /* Cell Popup */
+    .cell-popup {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 900;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .cell-popup-inner {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 380px;
+      width: 90%;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .cell-popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .cell-popup-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #999;
+      padding: 0 0.3rem;
+    }
+
+    .cell-popup-current {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--ink);
+      padding: 0.5rem 0.75rem;
+      background: var(--verified-bg);
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+
+    .cell-popup-section {
+      font-size: 0.8rem;
+      color: var(--slate);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 0.75rem 0 0.4rem;
+    }
+
+    .cell-popup-suggestion {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0.6rem;
+      background: var(--suggestion-bg);
+      border-radius: 5px;
+      margin-bottom: 0.3rem;
+      font-size: 0.95rem;
+    }
+
+    .cell-popup-votes {
+      cursor: pointer;
+      color: var(--copper);
+      font-weight: 600;
+      font-size: 0.85rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .cell-popup-votes:hover {
+      background: rgba(184,115,51,0.15);
+    }
+
+    .cell-popup-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .cell-popup-input-row input {
+      flex: 1;
+      padding: 0.5rem 0.7rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .cell-popup-input-row input:focus {
+      border-color: var(--copper);
+    }
+
+    .cell-popup-input-row button {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+    }
+
     /* Honeypot */
     .hp-field { position: absolute; left: -9999px; }
   </style>
@@ -799,23 +905,108 @@ async function onCellClicked(event) {
   if (!data) return;
   const col = colDef.field;
   if (!COUNTRY_COLS.includes(col)) return;
+  if (isAdmin) return; // admin edits directly
 
+  const canonical = data[col];
   const suggestions = data._suggestions?.[col] || [];
-  if (suggestions.length === 0) return;
 
-  // If there are suggestions, show them in a simple alert for now
-  // (Could be a nicer popover in v2)
-  if (!data[col] && suggestions.length > 0) {
-    // Allow upvoting the top suggestion
-    const top = suggestions[0];
-    if (confirm(`"${top.word}" (${top.votes} votos)\n\n¿Votar a favor?`)) {
-      await sb.rpc('upvote', { p_suggestion_id: top.id, p_visitor_id: visitorId });
-      await refreshGrid();
-    }
-  } else if (suggestions.length > 0) {
-    const list = suggestions.map(s => `• ${s.word} (${s.votes} votos)`).join('\n');
-    alert(`Sugerencias de la comunidad:\n\n${list}`);
+  // If cell is empty and no suggestions, let AG Grid's editable handle it
+  if (!canonical && suggestions.length === 0) return;
+
+  // Build popup content
+  showCellPopup(data, col, canonical, suggestions);
+}
+
+function showCellPopup(entryData, country, canonical, suggestions) {
+  // Remove existing popup
+  const old = document.getElementById('cell-popup');
+  if (old) old.remove();
+
+  const popup = document.createElement('div');
+  popup.id = 'cell-popup';
+  popup.className = 'cell-popup';
+
+  let html = '<div class="cell-popup-inner">';
+  html += '<div class="cell-popup-header">';
+  html += '<strong>' + entryData.concept + '</strong> — ' + (COUNTRY_LABELS[country] || country);
+  html += '<button class="cell-popup-close" onclick="closeCellPopup()">&times;</button>';
+  html += '</div>';
+
+  // Current value
+  if (canonical) {
+    html += '<div class="cell-popup-current">' + canonical + '</div>';
   }
+
+  // Existing suggestions with vote buttons
+  if (suggestions.length > 0) {
+    html += '<div class="cell-popup-section">Sugerencias de la comunidad:</div>';
+    suggestions.forEach(function(s) {
+      html += '<div class="cell-popup-suggestion">';
+      html += '<span>' + s.word + '</span>';
+      html += '<span class="cell-popup-votes" onclick="upvoteSuggestion(\'' + s.id + '\')">';
+      html += '▲ ' + s.votes;
+      html += '</span>';
+      html += '</div>';
+    });
+  }
+
+  // Suggest alternative input
+  html += '<div class="cell-popup-section">¿Lo dices diferente?</div>';
+  html += '<div class="cell-popup-input-row">';
+  html += '<input type="text" id="popup-suggestion-input" placeholder="Escribe tu variante..." maxlength="200">';
+  html += '<button class="btn-primary" onclick="submitPopupSuggestion(\'' + entryData.id + '\', \'' + country + '\')">Enviar</button>';
+  html += '</div>';
+
+  html += '</div>';
+  popup.innerHTML = html;
+  document.body.appendChild(popup);
+
+  // Focus input
+  setTimeout(function() { document.getElementById('popup-suggestion-input').focus(); }, 50);
+
+  // Close on outside click
+  popup.addEventListener('click', function(e) {
+    if (e.target === popup) closeCellPopup();
+  });
+}
+
+function closeCellPopup() {
+  const popup = document.getElementById('cell-popup');
+  if (popup) popup.remove();
+}
+
+async function upvoteSuggestion(suggestionId) {
+  await sb.rpc('upvote', { p_suggestion_id: suggestionId, p_visitor_id: visitorId });
+  closeCellPopup();
+  await refreshGrid();
+}
+
+async function submitPopupSuggestion(entryId, country) {
+  const input = document.getElementById('popup-suggestion-input');
+  const word = input.value.trim();
+  if (!word) return;
+
+  // Honeypot
+  if (document.getElementById('hp-field').value) return;
+
+  const ipHash = await getIpHash();
+  const { error } = await sb.rpc('submit_suggestion', {
+    p_entry_id: entryId,
+    p_country: country,
+    p_word: word,
+    p_visitor_id: visitorId,
+    p_ip_hash: ipHash
+  });
+
+  if (error) {
+    if (error.message === 'banned') {
+      alert('Tu acceso ha sido restringido.');
+    }
+    return;
+  }
+
+  closeCellPopup();
+  await refreshGrid();
 }
 
 async function refreshGrid() {
