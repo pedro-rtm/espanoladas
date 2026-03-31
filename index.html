@@ -7,9 +7,9 @@
   <meta name="description" content="Compara cómo se dice lo mismo en México, España, Argentina, Colombia, Chile, Cuba y más. Colabora sin cuenta.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@35.2.0/dist/ag-grid-community.min.js"></script>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@35.2.0/styles/ag-grid.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@35.2.0/styles/ag-theme-alpine.css">
+  <script src="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/dist/ag-grid-community.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-grid.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ag-grid-community@32.3.3/styles/ag-theme-alpine.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <style>
     :root {
@@ -454,6 +454,9 @@ async function loadData() {
     supabase.from('suggestions').select('*')
   ]);
 
+  if (entriesRes.error) throw new Error('Supabase entries: ' + entriesRes.error.message);
+  if (suggestionsRes.error) throw new Error('Supabase suggestions: ' + suggestionsRes.error.message);
+
   allEntries = entriesRes.data || [];
   allSuggestions = suggestionsRes.data || [];
 
@@ -535,8 +538,8 @@ function countryCellClass(params) {
 
 function isEditable(params) {
   if (isAdmin) return true;
+  if (!params.data) return false;
   const col = params.colDef.field;
-  // Anonymous users can only edit empty canonical cells
   return !params.data[col];
 }
 
@@ -580,32 +583,45 @@ function buildColumnDefs() {
 }
 
 async function initGrid() {
-  const rowData = await loadData();
-
-  const gridOptions = {
-    columnDefs: buildColumnDefs(),
-    rowData: rowData,
-    defaultColDef: {
-      sortable: true,
-      resizable: true,
-      filter: true,
-      minWidth: 120
-    },
-    animateRows: true,
-    enableCellTextSelection: true,
-    stopEditingWhenCellsLoseFocus: true,
-    onCellValueChanged: onCellEdit,
-    onCellClicked: onCellClicked,
-    getRowId: params => params.data?.id
-  };
-
   const container = document.getElementById('grid-container');
-  gridApi = agGrid.createGrid(container, gridOptions);
+  container.innerHTML = '<p style="padding:2rem;color:#888;font-family:inherit">Cargando datos...</p>';
 
-  // Wire up search
-  document.getElementById('search-input').addEventListener('input', e => {
-    gridApi.setGridOption('quickFilterText', e.target.value);
-  });
+  try {
+    const rowData = await loadData();
+
+    if (rowData.length === 0) {
+      container.innerHTML = '<p style="padding:2rem;color:#C44536;font-family:inherit">No se encontraron datos. Verifica la conexión.</p>';
+      return;
+    }
+
+    container.innerHTML = '';
+
+    const gridOptions = {
+      columnDefs: buildColumnDefs(),
+      rowData: rowData,
+      defaultColDef: {
+        sortable: true,
+        resizable: true,
+        filter: true,
+        minWidth: 120
+      },
+      animateRows: true,
+      enableCellTextSelection: true,
+      stopEditingWhenCellsLoseFocus: true,
+      onCellValueChanged: onCellEdit,
+      onCellClicked: onCellClicked,
+      getRowId: function(params) { return params.data ? params.data.id : null; }
+    };
+
+    gridApi = agGrid.createGrid(container, gridOptions);
+
+    document.getElementById('search-input').addEventListener('input', function(e) {
+      gridApi.setGridOption('quickFilterText', e.target.value);
+    });
+  } catch(e) {
+    container.innerHTML = '<p style="padding:2rem;color:#C44536;font-family:inherit">Error: ' + e.message + '</p>';
+    console.error('initGrid error:', e);
+  }
 }
 
 // ============================================
@@ -909,8 +925,13 @@ document.getElementById('audit-filter')?.addEventListener('input', e => {
 // ============================================
 // Init
 // ============================================
-checkSession();
-initGrid();
+try {
+  checkSession();
+  initGrid();
+} catch(e) {
+  document.getElementById('grid-container').innerHTML = '<p style="padding:2rem;color:#C44536">Error de inicialización: ' + e.message + '</p>';
+  console.error('Init error:', e);
+}
 </script>
 
 </body>
