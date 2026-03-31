@@ -119,6 +119,46 @@
       text-align: left;
     }
 
+    .hero-graphic {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .story-expander {
+      max-width: 620px;
+      margin: 0 auto 1.5rem;
+      text-align: left;
+    }
+
+    .story-expander summary {
+      cursor: pointer;
+      font-size: 0.95rem;
+      color: var(--copper);
+      font-weight: 500;
+      list-style: none;
+      text-align: center;
+    }
+
+    .story-expander summary::-webkit-details-marker { display: none; }
+    .story-expander summary::marker { content: ''; }
+
+    .story-expander summary::before {
+      content: '▸ ';
+    }
+
+    .story-expander[open] summary::before {
+      content: '▾ ';
+    }
+
+    .story-expander summary:hover {
+      color: var(--red-warm);
+    }
+
+    .story-expander .story {
+      margin-top: 1rem;
+      padding: 0;
+    }
+
     .header .cta {
       font-size: 1.05rem;
       color: var(--copper);
@@ -413,14 +453,33 @@
   </div>
 
   <div class="header">
+    <!-- Inline SVG graphic: speech bubbles with flags -->
+    <svg class="hero-graphic" width="120" height="80" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-bottom:0.5rem">
+      <!-- Left bubble (Mexico-ish) -->
+      <rect x="2" y="8" width="52" height="34" rx="10" fill="#C44536" opacity="0.9"/>
+      <polygon points="18,42 26,42 14,54" fill="#C44536" opacity="0.9"/>
+      <text x="28" y="30" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="14" fill="white">Chela</text>
+      <!-- Right bubble (Spain-ish) -->
+      <rect x="62" y="2" width="52" height="34" rx="10" fill="#B87333" opacity="0.9"/>
+      <polygon points="96,36 88,36 100,48" fill="#B87333" opacity="0.9"/>
+      <text x="88" y="24" text-anchor="middle" font-family="system-ui,sans-serif" font-weight="700" font-size="14" fill="white">Caña</text>
+      <!-- Confused face between -->
+      <text x="60" y="72" text-anchor="middle" font-size="22">🤷</text>
+    </svg>
+
     <h1>Españoladas</h1>
     <p class="tagline">Cuando un mexicano se casa con una española y descubre que "coger el autobús" no significa lo mismo en ambos lados del Atlántico.</p>
-    <div class="story">
-      <p>Esta lista nació de las conversaciones entre un mexicano viviendo en Madrid y su mujer española. Cada malentendido, cada carcajada, cada <em>"¿¡pero cómo le dicen ustedes?!"</em> fue a parar aquí. Lo que empezó como notas en el móvil ya lleva más de 300 entradas — y seguimos sumando.</p>
-      <p style="margin-top:0.75rem">Los conceptos están en inglés porque resulta que para ponernos de acuerdo primero hay que traducir a otro idioma. Así de distintos hablamos.</p>
-      <p style="margin-top:0.75rem">Ayúdanos a entendernos más entre hispanohablantes celebrando nuestras diferencias y la riqueza absurda de este idioma que compartimos.</p>
-    </div>
-    <div class="cta">¿Hablas español? Haz clic en cualquier celda vacía y escribe cómo lo dices tú. Sin cuenta. Sin registro. Solo escribe.</div>
+
+    <details class="story-expander">
+      <summary>La historia detrás de esto...</summary>
+      <div class="story">
+        <p>Esta lista nació de las conversaciones entre un mexicano viviendo en Madrid y su mujer española. Cada malentendido, cada carcajada, cada <em>"¿¡pero cómo le dicen ustedes?!"</em> fue a parar aquí. Lo que empezó como notas en el móvil ya lleva más de 300 entradas — y seguimos sumando.</p>
+        <p style="margin-top:0.75rem">Los conceptos están en inglés porque resulta que para ponernos de acuerdo primero hay que traducir a otro idioma. Así de distintos hablamos.</p>
+        <p style="margin-top:0.75rem">Ayúdanos a entendernos más entre hispanohablantes celebrando nuestras diferencias y la riqueza absurda de este idioma que compartimos.</p>
+      </div>
+    </details>
+
+    <div class="cta">Haz clic en cualquier celda vacía y escribe cómo lo dices tú. Sin cuenta. Sin registro. Solo escribe.</div>
     <div class="stats-bar">
       <div><span id="stat-entries">...</span> entradas</div>
       <div><span id="stat-countries">8</span> países</div>
