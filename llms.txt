@@ -1,0 +1,31 @@
+# Españoladas
+
+> Diccionario colaborativo del español — compara cómo se dice lo mismo en distintos países hispanohablantes.
+
+## Sobre el proyecto
+
+Españoladas es una tabla interactiva y open source que compara vocabulario entre países de habla hispana. Nació de las conversaciones entre un mexicano viviendo en Madrid y su mujer española. Cada malentendido y cada "¿cómo le dicen ustedes?!" fue a parar aquí.
+
+## Datos
+
+- 300+ entradas organizadas por categoría (Comida, Hogar, Ropa, Transporte, Jerga, etc.)
+- 8 columnas de países/regiones: México, España, Argentina, Colombia, Chile, Cuba, US Spanish, Norteño
+- Los conceptos están en inglés como lingua franca neutral
+- Los datos viven en Supabase y son editables por cualquier visitante sin cuenta
+
+## Cómo contribuir
+
+Los visitantes pueden hacer clic en cualquier celda vacía de la tabla y escribir cómo se dice en su país. No requiere cuenta ni registro. Las sugerencias aparecen inmediatamente.
+
+## Stack técnico
+
+- HTML + CSS + vanilla JS (un solo archivo index.html)
+- AG Grid Community para la tabla interactiva
+- Supabase para la base de datos y autenticación
+- GitHub Pages + dominio espanoladas.com
+
+## Enlaces
+
+- Web: https://espanoladas.com
+- Código: https://github.com/pedro-rtm/espanoladas
+- Creador: Pedro Rivera Torres Moir (https://pedrortm.com)
