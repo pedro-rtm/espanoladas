@@ -1,0 +1,64 @@
+name: Sugerencia
+description: Sugiere una palabra o corrige una entrada
+title: "[Sugerencia] "
+labels: ["sugerencia"]
+body:
+  - type: input
+    id: concepto
+    attributes:
+      label: Concepto
+      description: "¿Qué cosa o idea quieres describir?"
+      placeholder: "ej. Aguacate, Borrachera, Elevador..."
+    validations:
+      required: true
+  - type: dropdown
+    id: pais
+    attributes:
+      label: País
+      description: "¿En qué país o región se usa esta palabra?"
+      options:
+        - México
+        - España
+        - Argentina
+        - Colombia
+        - Chile
+        - Cuba
+        - US Spanish
+        - Norteño
+        - Otro
+    validations:
+      required: true
+  - type: input
+    id: palabra
+    attributes:
+      label: Palabra o expresión
+      description: "¿Cómo se dice en tu país?"
+      placeholder: "ej. Palta, Curda, Ascensor..."
+    validations:
+      required: true
+  - type: dropdown
+    id: categoria
+    attributes:
+      label: Categoría
+      options:
+        - Comida y Bebida
+        - Hogar y Casa
+        - Ropa y Accesorios
+        - Transporte
+        - Cuerpo y Anatomía
+        - Personas y Descripciones
+        - Verbos y Acciones
+        - Expresiones y Jerga
+        - Tecnología y Oficina
+        - Lugares y Geografía
+        - Dinero y Trabajo
+        - Juegos y Ocio
+        - Miscelánea
+    validations:
+      required: true
+  - type: textarea
+    id: contexto
+    attributes:
+      label: Contexto adicional
+      description: "¿Algo más que debamos saber? ¿La entrada actual tiene un error?"
+      placeholder: "Opcional"
