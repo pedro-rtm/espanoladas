@@ -437,7 +437,7 @@ const COUNTRY_LABELS = {
 // ============================================
 // State
 // ============================================
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let gridApi = null;
 let isAdmin = false;
 let allEntries = [];
@@ -450,8 +450,8 @@ localStorage.setItem('espanoladas_visitor', visitorId);
 // ============================================
 async function loadData() {
   const [entriesRes, suggestionsRes] = await Promise.all([
-    supabase.from('entries').select('*').order('category').order('concept'),
-    supabase.from('suggestions').select('*')
+    sb.from('entries').select('*').order('category').order('concept'),
+    sb.from('suggestions').select('*')
   ]);
 
   if (entriesRes.error) throw new Error('Supabase entries: ' + entriesRes.error.message);
@@ -640,13 +640,13 @@ async function onCellEdit(event) {
   if (isAdmin) {
     // Admin: direct update to entry
     const oldEntry = { ...data };
-    const { error } = await supabase.from('entries')
+    const { error } = await sb.from('entries')
       .update({ [col]: newValue, updated_at: new Date().toISOString() })
       .eq('id', data.id);
 
     if (!error) {
       // Log to audit
-      await supabase.from('audit_log').insert({
+      await sb.from('audit_log').insert({
         action: 'update_entry',
         entry_id: data.id,
         visitor_id: visitorId,
@@ -657,7 +657,7 @@ async function onCellEdit(event) {
   } else {
     // Anonymous: create suggestion
     const ipHash = await getIpHash();
-    const { error } = await supabase.rpc('submit_suggestion', {
+    const { error } = await sb.rpc('submit_suggestion', {
       p_entry_id: data.id,
       p_country: col,
       p_word: newValue,
@@ -695,7 +695,7 @@ async function onCellClicked(event) {
     // Allow upvoting the top suggestion
     const top = suggestions[0];
     if (confirm(`"${top.word}" (${top.votes} votos)\n\n¿Votar a favor?`)) {
-      await supabase.rpc('upvote', { p_suggestion_id: top.id, p_visitor_id: visitorId });
+      await sb.rpc('upvote', { p_suggestion_id: top.id, p_visitor_id: visitorId });
       await refreshGrid();
     }
   } else if (suggestions.length > 0) {
@@ -727,7 +727,7 @@ async function adminLogin() {
   const password = document.getElementById('login-password').value;
   const errorEl = document.getElementById('login-error');
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
 
   if (error) {
     errorEl.textContent = error.message;
@@ -746,7 +746,7 @@ async function adminLogin() {
 }
 
 async function adminLogout() {
-  await supabase.auth.signOut();
+  await sb.auth.signOut();
   isAdmin = false;
   document.getElementById('admin-bar').classList.remove('visible');
   document.getElementById('suggestions-panel').classList.remove('visible');
@@ -757,7 +757,7 @@ async function adminLogout() {
 
 // Check if already logged in
 async function checkSession() {
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { session } } = await sb.auth.getSession();
   if (session) {
     isAdmin = true;
     document.getElementById('admin-bar').classList.add('visible');
@@ -769,7 +769,7 @@ async function checkSession() {
 // Admin: Suggestions Panel
 // ============================================
 async function loadSuggestions() {
-  const { data } = await supabase.from('suggestions')
+  const { data } = await sb.from('suggestions')
     .select('*, entries(concept, category)')
     .order('votes', { ascending: false });
 
@@ -795,13 +795,13 @@ async function loadSuggestions() {
 }
 
 async function promoteSuggestion(id) {
-  await supabase.rpc('promote_suggestion', { p_suggestion_id: id });
+  await sb.rpc('promote_suggestion', { p_suggestion_id: id });
   await loadSuggestions();
   await refreshGrid();
 }
 
 async function rejectSuggestion(id) {
-  await supabase.from('suggestions').delete().eq('id', id);
+  await sb.from('suggestions').delete().eq('id', id);
   await loadSuggestions();
   await refreshGrid();
 }
@@ -810,7 +810,7 @@ async function rejectSuggestion(id) {
 // Admin: Audit Log
 // ============================================
 async function loadAuditLog(filter) {
-  let query = supabase.from('audit_log')
+  let query = sb.from('audit_log')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(200);
@@ -851,7 +851,7 @@ function filterAuditByVisitor(vid) {
 
 async function revertChange(auditId) {
   if (!confirm('¿Revertir este cambio?')) return;
-  await supabase.rpc('revert_change', { p_audit_id: auditId });
+  await sb.rpc('revert_change', { p_audit_id: auditId });
   await loadAuditLog();
   await refreshGrid();
 }
@@ -859,7 +859,7 @@ async function revertChange(auditId) {
 async function banVisitor(vid) {
   const reason = prompt(`Banear usuario ${vid.slice(0, 8)}...\n\nRazón (opcional):`);
   if (reason === null) return; // cancelled
-  const { data } = await supabase.rpc('ban_visitor', { p_visitor_id: vid, p_reason: reason || null });
+  const { data } = await sb.rpc('ban_visitor', { p_visitor_id: vid, p_reason: reason || null });
   alert(`Usuario baneado. Contribuciones eliminadas.`);
   await loadAuditLog();
   await loadSuggestions();
