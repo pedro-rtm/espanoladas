@@ -2,7 +2,7 @@
 
 > Cuando un mexicano se casa con una española y descubre que "coger el autobús" no significa lo mismo en ambos lados del Atlántico.
 
-**[→ Ver la web en vivo](https://pedro-rtm.github.io/espanoladas/)**
+**[→ Ver la web en vivo](https://espanoladas.com)**
 
 ## ¿Qué es esto?
 
