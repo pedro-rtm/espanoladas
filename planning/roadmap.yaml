@@ -1,39 +1,57 @@
-# Espanoladas engineering ledger. Schema: studio repository-roadmap v1 (~/Stuff/.portfolio/templates/repository-roadmap.yaml). Created 2026-10-09 by the studio lane (GOV-S2.3d).
+# Espanoladas engineering ledger, in the studio roadmap schema (v1). Created 2026-10-09 by the studio lane.
 # Project mode (recorded on the project card, not authoritative here): OPERATE. Completed product; maintenance and accuracy fixes only, no feature backlog.
 schema_version: 1
 project_id: espanoladas
 repository: pedro-rtm/espanoladas
 trust_boundary: Public repository (rights reserved per project card) holding the static website source; live vocabulary lives in Supabase runtime tables, not in this repository.
-current_outcome: The public documentation (README, CONTRIBUTING) matches the live site at espanoladas.com and the recorded source policy.
+current_outcome: espanoladas.com serves the site again from a recorded host (it is down as of 2026-10-09), and the public documentation (README, CONTRIBUTING) matches that host and the recorded source policy.
 wip_limit: 1
 
 releases:
   - id: R1
-    title: Documentation accuracy
-    outcome: Public documentation points to the canonical live URL and states one consistent source policy.
+    title: Restore hosting and documentation accuracy
+    outcome: The canonical URL serves the site, and public documentation points to it and states one consistent source policy.
 
 work_packages:
   - id: ESP-R1.1
     release: R1
-    title: Correct stale public documentation
-    outcome: Contributors and readers are sent to the live site and see an accurate licence and hosting statement.
+    title: Restore hosting and correct stale public documentation
+    outcome: The site is served at espanoladas.com, and contributors and readers are sent to it and see an accurate licence and hosting statement.
     sizing: decomposed
     admission:
-      rationale: Accuracy fixes to a live public product; no new features.
+      rationale: Production is down (see ESP-R1.0); restoring the host precedes accuracy fixes. No new features.
       evidence: "Commit 0c1827a (2026-03-31) moved the live URL to espanoladas.com and CNAME holds espanoladas.com, yet CONTRIBUTING.md still links pedro-rtm.github.io/espanoladas; README.md states MIT while the project card records rights_reserved and no LICENSE file exists."
     slices:
+      - id: ESP-R1.0
+        title: Record the production outage and restore hosting
+        outcome: The outage is recorded and https://espanoladas.com serves index.html from main again on the host chosen in OWNER-2.
+        status: blocked
+        depends_on: []
+        acceptance:
+          - "Outage recorded 2026-10-09 - https://espanoladas.com gave no response; http://espanoladas.com and http://www.espanoladas.com returned 404; apex A records point to the GitHub Pages IPs 185.199.108-111.153 and www is a CNAME to pedro-rtm.github.io, yet GitHub reports has_pages false for this repository."
+          - After the OWNER-2 host change, https://espanoladas.com and http://espanoladas.com return 200 with the main index.html, and HTTPS is enforced.
+        verify:
+          - "curl -s -m 15 -o /dev/null -w '%{http_code}' https://espanoladas.com"
+          - "gh api repos/pedro-rtm/espanoladas --jq .has_pages"
+          - "dig +short espanoladas.com A"
+        delivery: production
+        blocker: Awaiting OWNER-2 (host choice).
+        evidence:
+          commit: null
+          deployment: null
+          verified_at: null
       - id: ESP-R1.1a
         title: Point CONTRIBUTING.md at the canonical URL
         outcome: CONTRIBUTING.md links to https://espanoladas.com instead of the old github.io address.
-        status: ready
-        depends_on: []
+        status: blocked
+        depends_on: [ESP-R1.0]
         acceptance:
           - CONTRIBUTING.md contains no pedro-rtm.github.io reference and links https://espanoladas.com.
         verify:
           - "! grep -rn 'github.io' CONTRIBUTING.md README.md"
           - "grep -n 'https://espanoladas.com' CONTRIBUTING.md"
         delivery: repository
-        blocker: null
+        blocker: Depends on ESP-R1.0; the canonical URL must serve the site before contributors are pointed at it.
         evidence:
           commit: null
           deployment: null
@@ -57,15 +75,15 @@ work_packages:
       - id: ESP-R1.1c
         title: Verify and correct the hosting statement
         outcome: README.md "Stack" names the actual production host.
-        status: ready
-        depends_on: []
+        status: blocked
+        depends_on: [ESP-R1.0]
         acceptance:
           - README.md hosting line matches the observed serving platform for https://espanoladas.com.
         verify:
           - "curl -sI https://espanoladas.com | head -20"
           - "grep -n -i 'hosting' README.md"
         delivery: repository
-        blocker: null
+        blocker: Depends on ESP-R1.0; there is no serving platform to record until hosting is restored.
         evidence:
           commit: null
           deployment: null
@@ -77,6 +95,12 @@ owner_actions:
     owner: Pedro
     status: open
     blocks: [ESP-R1.1b]
+    evidence: null
+  - id: OWNER-2
+    action: "Choose the production host for espanoladas.com. Recommendation: re-enable GitHub Pages from main (root), which matches the existing DNS (GitHub Pages A records, www CNAME to pedro-rtm.github.io) and the committed CNAME file, so it is the smallest change."
+    owner: Pedro
+    status: open
+    blocks: [ESP-R1.0]
     evidence: null
 
 backlog: []
